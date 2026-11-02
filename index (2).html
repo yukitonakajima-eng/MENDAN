@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TOKUTY — Rekaman Suara</title>
+<style>
+:root{
+  --oren:#FF730D; --oren-tua:#E35A00; --oren-gelap:#B84600; --oren-muda:#FFF2E7;
+  --teks:#231B14; --abu:#7C7169; --garis:#ECE2D9; --merah:#C0392B; --hijau:#157F4F;
+  --bg:#FBF7F3; --r:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--teks);font-size:16px;line-height:1.6;padding-bottom:40px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif}
+.bungkus{max-width:640px;margin:0 auto;padding:0 16px}
+header{background:linear-gradient(135deg,#FF8A2B,var(--oren) 45%,#EF6100);color:#fff;padding:16px 0}
+.logo{font-weight:800;letter-spacing:.15em;font-size:20px}
+.logo small{display:block;font-weight:600;letter-spacing:.02em;font-size:11px;opacity:.95}
+.kartu{background:#fff;border:1px solid var(--garis);border-radius:var(--r);padding:22px 20px;margin:18px 0;
+  box-shadow:0 1px 2px rgba(35,27,20,.05),0 8px 24px -12px rgba(35,27,20,.18)}
+h2{margin:0 0 6px;font-size:20px;color:var(--oren-gelap)}
+.sub{color:var(--abu);font-size:14px;margin:0 0 16px}
+.titik{display:flex;gap:6px;margin:14px 0 0}
+.titik i{flex:1;height:5px;border-radius:99px;background:var(--garis)}
+.titik i.kini{background:var(--oren)} .titik i.beres{background:var(--hijau)}
+.tanya-ja{font-size:20px;font-weight:700;line-height:1.5;margin:0 0 6px}
+.tanya-id{color:var(--abu);font-size:14px;margin:0 0 18px}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;font-weight:700}
+.besar{width:100%;padding:17px;font-size:17px;background:var(--oren-tua);color:#fff;
+  box-shadow:0 6px 16px -7px rgba(227,90,0,.85);margin-bottom:10px}
+.besar[disabled]{opacity:.45;box-shadow:none}
+.garis{width:100%;padding:14px;font-size:15px;background:#fff;color:var(--oren-tua);
+  border:1.5px solid var(--oren-tua);margin-bottom:10px}
+.merah{background:var(--merah);box-shadow:none}
+.jam{font-size:40px;font-weight:800;text-align:center;margin:10px 0 4px;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.jam.rekam{color:var(--merah)}
+.bar{height:6px;background:var(--garis);border-radius:99px;overflow:hidden;margin-bottom:16px}
+.bar i{display:block;height:100%;background:var(--merah);width:0}
+.petunjuk{background:var(--oren-muda);border:1px solid #F7D6BB;border-radius:12px;
+  padding:13px 15px;font-size:13.5px;line-height:1.6;margin:14px 0}
+audio{width:100%;margin:10px 0}
+.sembunyi{display:none!important}
+.galat{background:#FDECEB;border:1px solid #F3C2BD;border-radius:12px;padding:14px;
+  font-size:14px;margin:14px 0}
+.lencana{display:inline-flex;align-items:center;gap:6px;background:#EDF8F2;color:var(--hijau);
+  border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;margin-bottom:10px}
+#diag{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid var(--garis);
+  border-radius:12px;padding:13px;font:12px/1.5 ui-monospace,Menlo,monospace;color:#4a423b}
+summary{cursor:pointer;font-size:13px;color:var(--abu);padding:8px 0}
+</style>
+</head>
+<body>
+
+<header><div class="bungkus">
+  <div class="logo">tokuty<small>Rekaman Suara / 音声録音</small></div>
+</div></header>
+
+<div class="bungkus">
+
+  <!-- ---------- layar pembuka ---------- -->
+  <div id="layarAwal" class="kartu">
+    <h2>Rekaman suara singkat</h2>
+    <p class="sub">録音のお願い</p>
+    <div class="petunjuk">
+      Ada <b>3 pertanyaan</b>. Setiap pertanyaan dijawab <b>maksimal 40 detik</b>,
+      <b>dalam bahasa Jepang</b>.<br><br>
+      • Jawab dengan kata-kata Anda sendiri — <b>jangan membaca teks</b>.<br>
+      • Salah atau terbata-bata tidak apa-apa. Yang kami dengar cara Anda berbicara, bukan kesempurnaannya.<br>
+      • Bisa diulang sebelum dikirim.<br>
+      • Cari tempat yang tidak berisik.
+    </div>
+    <button class="besar" onclick="mulai()">Mulai</button>
+    <p class="sub" style="text-align:center;margin:0">
+      Akan muncul permintaan izin mikrofon. Pilih <b>Allow / Izinkan</b>.
+    </p>
+  </div>
+
+  <!-- ---------- layar pertanyaan ---------- -->
+  <div id="layarTanya" class="kartu sembunyi">
+    <div class="titik" id="titik"></div>
+    <p class="sub" id="nomor" style="margin:12px 0 10px"></p>
+    <p class="tanya-ja" id="tanyaJa"></p>
+    <p class="tanya-id" id="tanyaId"></p>
+
+    <div class="jam" id="jam">0:00</div>
+    <div class="bar"><i id="barIsi"></i></div>
+
+    <button class="besar" id="tblRekam" onclick="tekanRekam()">Mulai rekam</button>
+    <div id="sesudah" class="sembunyi">
+      <audio id="putar" controls playsinline></audio>
+      <button class="garis" onclick="ulangi()">Rekam ulang</button>
+      <button class="besar" id="tblLanjut" onclick="lanjut()">Lanjut</button>
+    </div>
+    <div id="galatRekam" class="galat sembunyi"></div>
+  </div>
+
+  <!-- ---------- layar selesai ---------- -->
+  <div id="layarSelesai" class="kartu sembunyi">
+    <div class="lencana">✓ Ketiga jawaban terekam</div>
+    <h2>Selesai</h2>
+    <p class="sub">Dengarkan sekali lagi kalau perlu, lalu kirim.</p>
+    <div id="daftarRekaman"></div>
+    <button class="besar" id="tblKirim" onclick="kirim()">Kirim rekaman</button>
+    <button class="garis" onclick="ulangSemua()">Ulangi dari awal</button>
+    <div id="hasilKirim" class="petunjuk sembunyi"></div>
+  </div>
+
+  <details>
+    <summary>Keterangan teknis (untuk tim Tokuty)</summary>
+    <div id="diag">belum dijalankan</div>
+    <button class="garis" style="margin-top:10px" onclick="salinDiag()">Salin keterangan teknis</button>
+  </details>
+
+</div>
+
+<script>
+/* ==========================================================================
+   PERTANYAAN
+   Urutannya disengaja. Nomor 1 gampang dan sudah dihafal semua orang —
+   itu pemanasan, bukan pembeda. Nomor 2 yang sebenarnya menguji: menjelaskan
+   pekerjaan harian tidak bisa dihafal dari contoh dan memaksa kosakata kerja
+   yang nyata. Nomor 3 mengambil alasan pindah langsung dari mulutnya.
+   ========================================================================== */
+var TANYA = [
+  { ja:'自己紹介をしてください。お名前、年齢、今のお仕事を教えてください。',
+    id:'Perkenalkan diri Anda: nama, umur, dan pekerjaan Anda sekarang.' },
+  { ja:'今の仕事で、毎日どんな作業をしていますか。くわしく教えてください。',
+    id:'Di pekerjaan sekarang, apa saja yang Anda kerjakan setiap hari? Ceritakan sedetail mungkin.' },
+  { ja:'なぜ会社を変えたいですか。次の会社で何をしたいですか。',
+    id:'Kenapa Anda ingin pindah perusahaan? Di perusahaan berikutnya Anda ingin melakukan apa?' }
+];
+var BATAS_DETIK = 40;
+
+var ke = 0, aliran = null, perekam = null, potongan = [],
+    rekaman = [], jamHitung = null, mulaiMs = 0, sedangRekam = false;
+var diag = [];
+
+function D(t){ diag.push(t); var e=document.getElementById('diag'); if(e) e.textContent = diag.join('\n'); }
+function salinDiag(){
+  var t = diag.join('\n');
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){alert('Tersalin.');},sorot);
+    } else sorot();
+  }catch(e){ sorot(); }
+}
+function sorot(){
+  try{ var r=document.createRange(); r.selectNodeContents(document.getElementById('diag'));
+    var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    alert('Teksnya sudah disorot — salin manual.'); }catch(e){}
+}
+
+/* ---------- keterangan awal ---------- */
+(function(){
+  D('=== REKAM SUARA — keterangan teknis ===');
+  D('Waktu    : ' + new Date().toString());
+  D('Peramban : ' + navigator.userAgent);
+  var diIframe = false;
+  try{ diIframe = (window.self !== window.top); }catch(e){ diIframe = true; }
+  D('Di iframe : ' + (diIframe ? 'YA (ini masalah — harus halaman penuh)' : 'tidak (benar)'));
+  D('Alamat    : ' + location.href);
+  D('HTTPS     : ' + (window.isSecureContext ? 'ya' : 'TIDAK'));
+  D('getUserMedia : ' + (!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? 'ada' : 'TIDAK ADA'));
+  if (window.MediaRecorder){
+    var f = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'], b = [];
+    for (var i=0;i<f.length;i++) if (MediaRecorder.isTypeSupported(f[i])) b.push(f[i]);
+    D('Format    : ' + (b.length ? b.join(', ') : 'TIDAK ADA'));
+  } else D('MediaRecorder: TIDAK ADA');
+  D('');
+})();
+
+/* ---------- alur ---------- */
+function mulai(){
+  // Izin HARUS diminta dari sentuhan pengguna — ini syarat iOS.
+  D('Meminta izin mikrofon…');
+  navigator.mediaDevices.getUserMedia({ audio:true }).then(function(s){
+    aliran = s;
+    D('>>> IZIN DIBERIKAN — mikrofon terbuka.');
+    var t = s.getAudioTracks()[0];
+    if (t) D('Perangkat : ' + (t.label || '(tanpa nama)'));
+    document.getElementById('layarAwal').classList.add('sembunyi');
+    document.getElementById('layarTanya').classList.remove('sembunyi');
+    gambarTanya();
+  }).catch(function(e){
+    D('>>> IZIN DITOLAK / DIBLOKIR');
+    D('    nama  : ' + (e && e.name));
+    D('    pesan : ' + (e && e.message));
+    var k = document.getElementById('layarAwal');
+    k.insertAdjacentHTML('beforeend',
+      '<div class="galat"><b>Mikrofon tidak bisa dibuka.</b><br>' +
+      (e && e.name) + ': ' + (e && e.message) +
+      '<br><br>Kalau Anda tadi menekan "Don\'t Allow", buka Pengaturan peramban ' +
+      'dan izinkan mikrofon untuk halaman ini, lalu muat ulang.</div>');
+  });
+}
+
+function gambarTanya(){
+  var h = '';
+  for (var i=0;i<TANYA.length;i++)
+    h += '<i class="' + (i<ke?'beres':(i===ke?'kini':'')) + '"></i>';
+  document.getElementById('titik').innerHTML = h;
+  document.getElementById('nomor').textContent =
+    'Pertanyaan ' + (ke+1) + ' dari ' + TANYA.length + ' / 質問 ' + (ke+1);
+  document.getElementById('tanyaJa').textContent = TANYA[ke].ja;
+  document.getElementById('tanyaId').textContent = TANYA[ke].id;
+  document.getElementById('sesudah').classList.add('sembunyi');
+  document.getElementById('galatRekam').classList.add('sembunyi');
+  var b = document.getElementById('tblRekam');
+  b.classList.remove('sembunyi','merah'); b.textContent = 'Mulai rekam'; b.disabled = false;
+  aturJam(0);
+}
+
+function aturJam(detik){
+  var m = Math.floor(detik/60), s = detik%60;
+  document.getElementById('jam').textContent = m + ':' + (s<10?'0':'') + s;
+  document.getElementById('barIsi').style.width =
+    Math.min(100, (detik/BATAS_DETIK)*100) + '%';
+}
+
+function tekanRekam(){
+  if (sedangRekam) { hentikan(); return; }
+  potongan = [];
+  var pilih = '';
+  var urut = ['audio/webm;codecs=opus','audio/webm','audio/mp4'];
+  for (var i=0;i<urut.length;i++){
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported(urut[i])) { pilih = urut[i]; break; }
+  }
+  try{
+    perekam = pilih ? new MediaRecorder(aliran, { mimeType: pilih }) : new MediaRecorder(aliran);
+  }catch(e){
+    tampilGalat('Tidak bisa memulai perekam: ' + e); D('MediaRecorder galat: ' + e); return;
+  }
+  D('Rekam #' + (ke+1) + ' format=' + (perekam.mimeType||'?'));
+  perekam.ondataavailable = function(ev){ if (ev.data && ev.data.size) potongan.push(ev.data); };
+  perekam.onstop = function(){
+    var blob = new Blob(potongan, { type: perekam.mimeType || 'audio/webm' });
+    rekaman[ke] = { blob:blob, mime:perekam.mimeType||'audio/webm',
+                    detik:Math.round((Date.now()-mulaiMs)/1000) };
+    D('  selesai: ' + Math.round(blob.size/1024) + ' KB, ' + rekaman[ke].detik + ' detik');
+    var el = document.getElementById('putar');
+    el.src = URL.createObjectURL(blob);
+    document.getElementById('sesudah').classList.remove('sembunyi');
+    document.getElementById('tblRekam').classList.add('sembunyi');
+    document.getElementById('tblLanjut').textContent =
+      (ke === TANYA.length-1) ? 'Selesai' : 'Lanjut ke pertanyaan ' + (ke+2);
+  };
+  perekam.start();
+  sedangRekam = true; mulaiMs = Date.now();
+  var b = document.getElementById('tblRekam');
+  b.textContent = 'Berhenti'; b.classList.add('merah');
+  document.getElementById('jam').classList.add('rekam');
+  jamHitung = setInterval(function(){
+    var d = Math.round((Date.now()-mulaiMs)/1000);
+    aturJam(d);
+    if (d >= BATAS_DETIK) hentikan();
+  }, 250);
+}
+
+function hentikan(){
+  if (!sedangRekam) return;
+  sedangRekam = false;
+  if (jamHitung) { clearInterval(jamHitung); jamHitung = null; }
+  document.getElementById('jam').classList.remove('rekam');
+  try{ perekam.stop(); }catch(e){ D('stop galat: ' + e); }
+}
+
+function ulangi(){ gambarTanya(); }
+
+function lanjut(){
+  if (ke < TANYA.length - 1) { ke++; gambarTanya(); return; }
+  document.getElementById('layarTanya').classList.add('sembunyi');
+  var k = document.getElementById('layarSelesai');
+  k.classList.remove('sembunyi');
+  var h = '', total = 0;
+  for (var i=0;i<rekaman.length;i++){
+    if (!rekaman[i]) continue;
+    total += rekaman[i].blob.size;
+    h += '<p class="sub" style="margin:14px 0 4px"><b>Pertanyaan ' + (i+1) + '</b> — ' +
+         rekaman[i].detik + ' detik, ' + Math.round(rekaman[i].blob.size/1024) + ' KB</p>' +
+         '<audio controls playsinline src="' + URL.createObjectURL(rekaman[i].blob) + '"></audio>';
+  }
+  h += '<p class="sub" style="margin-top:14px">Total ' + Math.round(total/1024) + ' KB</p>';
+  document.getElementById('daftarRekaman').innerHTML = h;
+  D('');
+  D('TOTAL ketiga rekaman: ' + Math.round(total/1024) + ' KB');
+  try{ aliran.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+}
+
+function ulangSemua(){ location.reload(); }
+
+/* Pengiriman ke Drive disambungkan sesudah uji ini berhasil. Untuk sekarang
+   tombolnya hanya melaporkan apa yang AKAN dikirim, supaya ukurannya terukur
+   dulu di HP dan sinyal yang sebenarnya. */
+function kirim(){
+  var total = 0;
+  for (var i=0;i<rekaman.length;i++) if (rekaman[i]) total += rekaman[i].blob.size;
+  var k = document.getElementById('hasilKirim');
+  k.classList.remove('sembunyi');
+  k.innerHTML = '<b>Uji berhasil.</b><br>Ketiga rekaman siap, total ' +
+    Math.round(total/1024) + ' KB.<br><br>Pengiriman ke Google Drive belum ' +
+    'disambungkan — itu langkah berikutnya. Tolong buka "Keterangan teknis" ' +
+    'di bawah, tekan Salin, dan kirimkan hasilnya.';
+  document.getElementById('tblKirim').disabled = true;
+  D('Tombol kirim ditekan. Total ' + Math.round(total/1024) + ' KB (belum diunggah).');
+}
+
+function tampilGalat(t){
+  var e = document.getElementById('galatRekam');
+  e.textContent = t; e.classList.remove('sembunyi');
+}
+</script>
+</body>
+</html>
